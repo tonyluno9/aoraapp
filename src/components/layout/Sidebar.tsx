@@ -6,6 +6,7 @@ import { Button } from '@/components/ui'
 import { NAV_ITEMS } from './navItems'
 import { cn } from '@/lib/cn'
 import { formatDuration } from '@/lib/dates'
+import { PALETTE_SHORTCUT } from '@/lib/platform'
 import type { DayCapacity } from '@/lib/capacity'
 
 interface SidebarProps {
@@ -54,7 +55,8 @@ export function Sidebar({ today, onCapture }: SidebarProps) {
           </div>
         </div>
         <p className="px-1 text-micro text-muted">
-          Presiona <span className="text-text">⌘K</span> para buscar o saltar.
+          Presiona <kbd className="font-sans text-text">{PALETTE_SHORTCUT}</kbd> para buscar o
+          saltar.
         </p>
       </div>
     </aside>

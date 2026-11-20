@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Inbox, TriangleAlert } from 'lucide-react'
 import { Screen } from '@/components/layout/Screen'
 import { CapacityRing } from '@/components/brand/CapacityRing'
-import { Button, Card, EmptyState, Skeleton } from '@/components/ui'
+import { Button, Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
 import { TaskList } from '@/components/task/TaskList'
 import { useAppStore, useVisibleTasks } from '@/store/useAppStore'
 import { useUIStore } from '@/store/useUIStore'
@@ -11,7 +11,16 @@ import { useTaskActions } from '@/lib/useTaskActions'
 import { useSkeleton } from '@/lib/useSkeleton'
 import { computeDayCapacity, tasksOfDay } from '@/lib/capacity'
 import { STATE_LABEL } from '@/lib/types'
-import { dayKey, formatDuration, formatLongDate, greeting } from '@/lib/dates'
+import {
+  DAY_NAME,
+  addDays,
+  dayKey,
+  differenceInCalendarDays,
+  formatDuration,
+  formatLongDate,
+  greeting,
+  startOfDay,
+} from '@/lib/dates'
 
 export function TodayScreen() {
   const loading = useSkeleton()
@@ -27,6 +36,16 @@ export function TodayScreen() {
   const pendingCount = tasks.filter(
     (task) => task.status === 'pendiente' || task.status === 'vencida',
   ).length
+
+  // El primer día de los próximos siete que ya no cabe, para avisar con tiempo.
+  const upcomingOverload = useMemo(() => {
+    for (let offset = 1; offset <= 7; offset += 1) {
+      const day = addDays(startOfDay(today), offset)
+      const dayCapacity = computeDayCapacity(day, tasks, availability)
+      if (dayCapacity.percent > 100) return { day, capacity: dayCapacity }
+    }
+    return null
+  }, [today, tasks, availability])
 
   const firstName = user.name.split(' ')[0]
 
@@ -62,14 +81,35 @@ export function TodayScreen() {
               </p>
             </div>
             {capacity.percent > 100 && (
-              <Link to={`/sobrecarga?dia=${dayKey(today)}`} className="w-full sm:w-auto">
-                <Button variant="secondary" fullWidth>
-                  <TriangleAlert size={16} aria-hidden="true" />
-                  Ver sobrecarga
-                </Button>
+              <Link
+                to={`/sobrecarga?dia=${dayKey(today)}`}
+                className={buttonClasses({ variant: 'secondary', className: 'w-full sm:w-auto' })}
+              >
+                <TriangleAlert size={16} aria-hidden="true" />
+                Ver sobrecarga
               </Link>
             )}
           </Card>
+        )}
+
+        {upcomingOverload && !loading && (
+          <Link
+            to={`/sobrecarga?dia=${dayKey(upcomingOverload.day)}`}
+            className="flex items-center justify-between gap-3 rounded-card border border-warn/40 bg-warnDim px-4 py-3 transition-colors duration-150 ease-out hover:border-warn/70"
+          >
+            <span className="flex items-start gap-3 text-aux text-text">
+              <TriangleAlert size={16} className="mt-0.5 shrink-0 text-warn" aria-hidden="true" />
+              <span>
+                {differenceInCalendarDays(upcomingOverload.day, today) === 1
+                  ? 'Mañana'
+                  : `El ${DAY_NAME[upcomingOverload.day.getDay()]} ${upcomingOverload.day.getDate()}`}{' '}
+                ya no te cabe: vas al{' '}
+                <span className="tabular-nums text-warn">{upcomingOverload.capacity.percent}%</span>.
+                Mira cómo aliviarlo.
+              </span>
+            </span>
+            <ArrowRight size={16} className="shrink-0 text-muted" aria-hidden="true" />
+          </Link>
         )}
 
         {pendingCount > 0 && !loading && (

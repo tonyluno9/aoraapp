@@ -14,6 +14,15 @@ interface TaskBlockProps {
   offset: { x: number; y: number }
   onPointerDown: (event: React.PointerEvent, task: Task) => void
   onClick: (task: Task) => void
+  /** Mueve con el teclado: días de diferencia y minutos de diferencia. */
+  onKeyMove: (task: Task, dayDelta: number, minuteDelta: number) => void
+}
+
+const KEY_MOVES: Record<string, [number, number]> = {
+  ArrowUp: [0, -15],
+  ArrowDown: [0, 15],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
 }
 
 export function TaskBlock({
@@ -26,6 +35,7 @@ export function TaskBlock({
   offset,
   onPointerDown,
   onClick,
+  onKeyMove,
 }: TaskBlockProps) {
   const done = task.status === 'completada'
   const compact = height < 44
@@ -34,17 +44,25 @@ export function TaskBlock({
     <button
       type="button"
       data-task-block="true"
+      data-task-id={task.id}
       onPointerDown={(event) => onPointerDown(event, task)}
       onClick={() => onClick(task)}
+      onKeyDown={(event) => {
+        const move = KEY_MOVES[event.key]
+        if (!move || !event.altKey || task.locked) return
+        event.preventDefault()
+        onKeyMove(task, move[0], move[1])
+      }}
       aria-label={`${task.title}, ${
         task.scheduledAt ? formatTime(task.scheduledAt) : 'sin hora'
       }, ${formatDuration(task.durationMin)}${task.locked ? ', bloque fijo' : ''}`}
+      aria-describedby={task.locked ? undefined : 'week-move-hint'}
       className={cn(
-        'absolute flex touch-none flex-col overflow-hidden rounded-card border border-line bg-surface px-2 py-1 text-left',
+        'absolute flex touch-none flex-col overflow-hidden rounded-card focus-visible:ring-inset focus-visible:ring-offset-0 border border-line bg-surface px-2 py-1 text-left',
         'transition-colors duration-150 ease-out hover:border-muted/40',
         task.locked ? 'cursor-not-allowed' : 'cursor-grab',
         dragging && 'z-30 cursor-grabbing border-accent shadow-modal',
-        done && 'opacity-55',
+        done && 'border-dashed',
       )}
       style={{
         top,

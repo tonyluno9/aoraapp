@@ -30,7 +30,11 @@ export function Field({ label, hint, error, hiddenLabel, className, children }: 
         'aria-invalid': error ? true : undefined,
       })}
       {message && (
-        <p id={messageId} className={cn('text-micro', error ? 'text-danger' : 'text-muted')}>
+        <p
+          id={messageId}
+          aria-live={error ? 'polite' : undefined}
+          className={cn('text-micro', error ? 'text-danger' : 'text-muted')}
+        >
           {message}
         </p>
       )}

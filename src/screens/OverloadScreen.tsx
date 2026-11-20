@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Scissors, Trash2 } from 'lucide-react'
 import { Screen } from '@/components/layout/Screen'
 import { CapacityRing } from '@/components/brand/CapacityRing'
-import { Button, Card, Chip, EmptyState, useToast } from '@/components/ui'
+import { Button, Card, Chip, EmptyState, buttonClasses, useToast } from '@/components/ui'
 import { TaskList } from '@/components/task/TaskList'
 import { useAppStore, useVisibleTasks } from '@/store/useAppStore'
 import { useTaskActions } from '@/lib/useTaskActions'
@@ -51,7 +51,7 @@ export function OverloadScreen() {
           <CapacityRing
             value={capacity.percent}
             size="lg"
-            label={`Carga del ${name}: ${capacity.percent} por ciento`}
+            label={`Carga del ${name}`}
           />
           <div className="flex flex-1 flex-col gap-2 text-center sm:text-left">
             <p className="text-subtitle text-text">{STATE_LABEL[capacity.state]}</p>
@@ -121,8 +121,8 @@ export function OverloadScreen() {
               title="Ese día está libre"
               description="No hay nada agendado. Buen momento para adelantar pendientes."
               action={
-                <Link to="/pendientes">
-                  <Button variant="primary">Ver pendientes</Button>
+                <Link to="/pendientes" className={buttonClasses({ variant: 'primary' })}>
+                  Ver pendientes
                 </Link>
               }
             />

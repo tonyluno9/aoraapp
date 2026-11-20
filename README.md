@@ -13,7 +13,8 @@ AORAA Task es un **prototipo de alta fidelidad** de una app web de gestión inte
 - **Agendado automático.** Un motor voraz coloca cada tarea en el primer hueco libre antes de su fecha límite, respetando tu horario, tus bloques fijos y una holgura entre tareas. Cada decisión trae su explicación.
 - **Anillo de carga.** Cada día muestra qué porcentaje de tu tiempo disponible ya está ocupado. Arriba de 100% el anillo cambia a ámbar.
 - **Sugerencias de sobrecarga.** Si un día se pasa, la app propone tres arreglos con tus tareas reales: mover, recortar o eliminar.
-- **Vista semanal con arrastre.** Arrastra bloques a otro día u hora; los bloques fijos no se mueven.
+- **Aviso anticipado.** Si en los próximos siete días hay uno que ya no te cabe, la pantalla Hoy te lo dice y te lleva a las sugerencias.
+- **Vista semanal con arrastre.** Arrastra bloques a otro día u hora; los bloques fijos no se mueven. Con el teclado, `Alt` + flechas mueve el bloque 15 minutos o un día.
 - **Conexiones simuladas** con Google Calendar, Apple Calendar y Notion.
 - **Paleta de comandos** (`⌘K` / `Ctrl+K`) y atajos: `N` nueva tarea, `T` hoy, `W` semana.
 
@@ -105,6 +106,15 @@ src/
 
 ## Estado del proyecto
 
-Las fases 1 a 8 están completas: andamiaje, tokens, componentes base, estado, motor, rutas y pantallas.
+Las nueve fases están completas: andamiaje, tokens, componentes base, estado, motor, rutas, pantallas y, en la fase 9, pulido y accesibilidad.
 
-Falta la fase 9: pulido, repaso de accesibilidad y verificación de los criterios de aceptación.
+### Accesibilidad
+
+- Enlace "Saltar al contenido" y foco al contenido en cada cambio de pantalla; cada pantalla tiene su propio título de pestaña.
+- Diálogos, hoja de captura y paleta con foco atrapado, cierre con `Esc` y foco de regreso al control que los abrió.
+- La paleta de comandos se anuncia como lista de opciones, con la opción activa y el número de resultados.
+- Tarjetas de tarea sin controles anidados: el título es el enlace al detalle y los botones de acción quedan aparte.
+- Los anillos de carga anuncian su porcentaje; los decorativos quedan ocultos a lectores de pantalla.
+- Bloques de la semana movibles con el teclado y deslizadores de horario que anuncian la hora, no minutos.
+- Animaciones de Framer Motion reducidas cuando el sistema pide menos movimiento.
+- Texto secundario y chips con contraste AA sobre todos los fondos.

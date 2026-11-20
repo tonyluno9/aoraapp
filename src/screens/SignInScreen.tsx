@@ -68,7 +68,7 @@ export function SignInScreen() {
                 {...props}
                 type="password"
                 autoComplete="current-password"
-                placeholder="••••••••"
+                placeholder="Cualquiera sirve en la demo"
                 value={password}
                 onChange={(event) => {
                   setPassword(event.target.value)

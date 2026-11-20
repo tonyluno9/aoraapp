@@ -67,7 +67,7 @@ export function WelcomeScreen() {
           >
             {step === 0 && (
               <div className="flex flex-col items-center gap-6">
-                <CapacityRing value={64} size="lg" showValue={false} label="AORAA Task" />
+                <CapacityRing value={64} size="lg" showValue={false} decorative />
                 <span className="text-subtitle font-medium tracking-[0.18em] text-text">
                   AORAA TASK
                 </span>
@@ -81,7 +81,7 @@ export function WelcomeScreen() {
               </div>
             )}
 
-            {step === 2 && <CapacityRing value={72} size="lg" label="Ejemplo de carga al 72%" />}
+            {step === 2 && <CapacityRing value={72} size="lg" label="Ejemplo de carga" />}
 
             <div className="flex flex-col gap-3">
               <h1 className="text-title font-medium text-text">{STEPS[step].title}</h1>

@@ -1,5 +1,5 @@
 import type { Availability, Task } from '@/lib/types'
-import { minutesOfDay, minutesToClock } from '@/lib/dates'
+import { formatLongDate, minutesOfDay, minutesToClock } from '@/lib/dates'
 import { cn } from '@/lib/cn'
 import { TaskBlock } from './TaskBlock'
 
@@ -69,6 +69,7 @@ interface DayColumnProps {
   dragOffset: { x: number; y: number }
   onBlockPointerDown: (event: React.PointerEvent, task: Task) => void
   onBlockClick: (task: Task) => void
+  onBlockKeyMove: (task: Task, dayDelta: number, minuteDelta: number) => void
 }
 
 export function DayColumn({
@@ -85,6 +86,7 @@ export function DayColumn({
   dragOffset,
   onBlockPointerDown,
   onBlockClick,
+  onBlockKeyMove,
 }: DayColumnProps) {
   const weekday = date.getDay()
   const open = availability.days.includes(weekday)
@@ -97,6 +99,8 @@ export function DayColumn({
   return (
     <div
       data-day-index={index}
+      role="group"
+      aria-label={formatLongDate(date)}
       className="relative min-w-0 flex-1 border-r border-line last:border-r-0"
       style={{ height }}
     >
@@ -134,7 +138,12 @@ export function DayColumn({
               height: (block.endMin - block.startMin) * pxPerMin,
             }}
           >
-            <span className="truncate text-micro text-muted">{block.label}</span>
+            <span className="truncate text-micro text-muted">
+              {block.label}
+              <span className="sr-only">
+                , de {minutesToClock(block.startMin)} a {minutesToClock(block.endMin)}
+              </span>
+            </span>
           </div>
         ))}
 
@@ -152,6 +161,7 @@ export function DayColumn({
             offset={dragOffset}
             onPointerDown={onBlockPointerDown}
             onClick={onBlockClick}
+            onKeyMove={onBlockKeyMove}
           />
         )
       })}
@@ -160,6 +170,7 @@ export function DayColumn({
         <div
           className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
           style={{ top: (nowMinutes - rangeStartMin) * pxPerMin }}
+          role="img"
           aria-label={`Hora actual: ${minutesToClock(nowMinutes)}`}
         >
           <span className="h-2 w-2 -translate-x-1/2 rounded-full bg-accent" aria-hidden="true" />

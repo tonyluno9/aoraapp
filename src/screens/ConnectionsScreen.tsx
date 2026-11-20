@@ -76,7 +76,7 @@ export function ConnectionsScreen() {
                     checked={integration.connected}
                     busy={busy === integration.id}
                     onChange={(next) => toggle(integration.id, next)}
-                    label={`${integration.connected ? 'Desconectar' : 'Conectar'} ${integration.name}`}
+                    label={integration.name}
                   />
                 </Card>
               )
@@ -86,9 +86,12 @@ export function ConnectionsScreen() {
 
         <section className="flex flex-col gap-3">
           <h3 className="text-subtitle text-text">Próximamente</h3>
-          <div className="flex flex-col gap-3 opacity-40">
+          <div className="flex flex-col gap-3">
             {soon.map((integration) => (
-              <Card key={integration.id} className="flex items-center gap-4">
+              <Card
+                key={integration.id}
+                className="flex items-center gap-4 border-dashed bg-transparent"
+              >
                 <IntegrationIcon id={integration.id} />
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <p className="text-body text-text">{integration.name}</p>

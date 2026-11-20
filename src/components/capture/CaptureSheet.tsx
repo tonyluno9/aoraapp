@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Keyboard, Mic } from 'lucide-react'
+import { Keyboard, Mic, Sparkles } from 'lucide-react'
 import { Button, Field, Sheet, Textarea, useToast } from '@/components/ui'
 import { CapacityRing } from '@/components/brand/CapacityRing'
 import { useAppStore } from '@/store/useAppStore'
@@ -197,6 +197,18 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
           </Field>
         )}
 
+        {phase === 'idle' && mode === 'texto' && text.trim().length === 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-start"
+            onClick={() => setText(DEMO_DICTATION)}
+          >
+            <Sparkles size={14} aria-hidden="true" />
+            Usar la frase de ejemplo
+          </Button>
+        )}
+
         {phase === 'dictando' && (
           <div className="flex flex-col gap-4">
             <VoiceState text={text} />
@@ -207,12 +219,12 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
         )}
 
         {phase === 'procesando' && (
-          <div className="flex flex-col items-center gap-4 py-6">
+          <div role="status" className="flex flex-col items-center gap-4 py-6">
             <motion.div
               animate={reduceMotion ? undefined : { rotate: 360 }}
               transition={{ duration: 1.4, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
             >
-              <CapacityRing value={28} size="md" showValue={false} label="Procesando" />
+              <CapacityRing value={28} size="md" showValue={false} decorative />
             </motion.div>
             <p className="text-body text-text">{STAGE_LABEL[stage]}</p>
             <p className="max-w-xs text-center text-aux text-muted">&ldquo;{text}&rdquo;</p>
@@ -251,7 +263,10 @@ function VoiceState({ text }: { text: string }) {
       <VoiceWave active className="w-full" />
       <p className="min-h-[72px] text-center text-body text-text">
         {text}
-        <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-accent align-middle" />
+        <span
+          aria-hidden="true"
+          className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-accent align-middle"
+        />
       </p>
       <p className="text-micro text-muted">Simulación de dictado: no se usa el micrófono.</p>
     </div>
@@ -273,6 +288,7 @@ function ModeButton({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
         'flex flex-1 items-center justify-center gap-2 rounded-button border px-3 py-2 text-aux transition-colors duration-150 ease-out',
         active ? 'border-accent bg-accentDim text-text' : 'border-line text-muted hover:text-text',

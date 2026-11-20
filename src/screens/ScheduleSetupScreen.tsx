@@ -36,7 +36,10 @@ export function ScheduleSetupScreen() {
     setAvailability({ days: next })
   }
 
-  const sample = Array.from({ length: 7 }, (_, index) => addDays(startOfDay(new Date()), index))
+  // Los próximos siete días, ordenados de lunes a domingo para que coincidan con los botones.
+  const sample = Array.from({ length: 7 }, (_, index) =>
+    addDays(startOfDay(new Date()), index),
+  ).sort((a, b) => WEEK_DAY_ORDER.indexOf(a.getDay()) - WEEK_DAY_ORDER.indexOf(b.getDay()))
 
   const add = () => {
     if (label.trim().length === 0) {
@@ -75,8 +78,10 @@ export function ScheduleSetupScreen() {
 
         <Card className="flex flex-col gap-5">
           <div className="flex flex-col gap-3">
-            <p className="text-body text-text">Días disponibles</p>
-            <div className="flex flex-wrap gap-2">
+            <h3 id="dias-disponibles" className="text-body text-text">
+              Días disponibles
+            </h3>
+            <div role="group" aria-labelledby="dias-disponibles" className="flex flex-wrap gap-2">
               {WEEK_DAY_ORDER.map((day) => {
                 const active = availability.days.includes(day)
                 return (
@@ -109,6 +114,7 @@ export function ScheduleSetupScreen() {
                   min={0}
                   max={availability.endMin - 60}
                   step={15}
+                  aria-valuetext={minutesToClock(availability.startMin)}
                   value={availability.startMin}
                   onChange={(event) => setAvailability({ startMin: Number(event.target.value) })}
                 />
@@ -123,6 +129,7 @@ export function ScheduleSetupScreen() {
                   min={availability.startMin + 60}
                   max={24 * 60}
                   step={15}
+                  aria-valuetext={minutesToClock(availability.endMin)}
                   value={availability.endMin}
                   onChange={(event) => setAvailability({ endMin: Number(event.target.value) })}
                 />
@@ -130,16 +137,26 @@ export function ScheduleSetupScreen() {
             </Field>
           </div>
 
-          <div className="flex flex-wrap gap-2 border-t border-line pt-4">
-            {sample.map((day) => (
-              <span
-                key={day.toISOString()}
-                className="rounded-full border border-line px-3 py-1 text-micro text-muted"
-              >
-                {DAY_INITIAL[day.getDay()]} ·{' '}
-                {formatDuration(dayAvailableMinutes(day, availability))}
-              </span>
-            ))}
+          <div className="flex flex-col gap-2 border-t border-line pt-4">
+            <p className="text-aux text-muted">Tiempo libre por día, ya sin bloques fijos</p>
+            <ul className="flex flex-wrap gap-2">
+              {sample.map((day) => {
+                const minutes = dayAvailableMinutes(day, availability)
+                return (
+                  <li
+                    key={day.toISOString()}
+                    className={cn(
+                      'rounded-full border border-line px-3 py-1 text-micro',
+                      minutes === 0 ? 'text-muted/70' : 'text-muted',
+                    )}
+                  >
+                    <span aria-hidden="true">{DAY_INITIAL[day.getDay()]}</span>
+                    <span className="sr-only">{DAY_NAME[day.getDay()]}</span> ·{' '}
+                    {minutes === 0 ? 'descanso' : formatDuration(minutes)}
+                  </li>
+                )
+              })}
+            </ul>
           </div>
         </Card>
 
@@ -173,7 +190,7 @@ export function ScheduleSetupScreen() {
           ))}
 
           <Card className="flex flex-col gap-4">
-            <p className="text-body text-text">Agregar un bloque</p>
+            <h4 className="text-body text-text">Agregar un bloque</h4>
 
             <Field label="Nombre" error={error}>
               {(props) => (

@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Check, ChevronRight, Clock3, Lock, RefreshCw } from 'lucide-react'
 import type { Task } from '@/lib/types'
 import { formatDuration, formatTime } from '@/lib/dates'
@@ -23,7 +23,6 @@ export function TaskCard({
   onPostpone,
   showTime = true,
 }: TaskCardProps) {
-  const navigate = useNavigate()
   const reduceMotion = useReducedMotion()
   const done = task.status === 'completada'
 
@@ -31,26 +30,20 @@ export function TaskCard({
     <motion.li
       layout
       initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-      animate={{ opacity: done ? 0.55 : 1, y: 0 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{
         duration: reduceMotion ? 0 : 0.25,
         ease: [0.16, 1, 0.3, 1],
         delay: reduceMotion ? 0 : Math.min(index, 12) * 0.03,
       }}
     >
+      {/* La tarjeta entera abre el detalle mediante el enlace del título, que se estira
+          sobre ella; los botones de acción quedan por encima para no anidar controles. */}
       <div
-        role="button"
-        tabIndex={0}
-        onClick={() => navigate(`/tarea/${task.id}`)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            navigate(`/tarea/${task.id}`)
-          }
-        }}
         className={cn(
-          'group flex cursor-pointer items-stretch gap-3 rounded-card border border-line bg-surface p-3',
+          'group relative flex items-stretch gap-3 rounded-card border border-line bg-surface p-3',
           'transition-colors duration-150 ease-out hover:border-muted/40',
+          'has-[a:focus-visible]:border-accent has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-accent/40',
         )}
       >
         <span
@@ -73,11 +66,16 @@ export function TaskCard({
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <p
             className={cn(
-              'truncate text-body text-text',
+              'line-clamp-2 break-words text-body text-text',
               done && 'text-muted line-through decoration-line',
             )}
           >
-            {task.title}
+            <Link
+              to={`/tarea/${task.id}`}
+              className="after:absolute after:inset-0 after:rounded-card focus-visible:ring-0 focus-visible:ring-offset-0"
+            >
+              {task.title}
+            </Link>
           </p>
           <div className="flex flex-wrap items-center gap-1.5">
             <Chip>{task.category}</Chip>
@@ -107,7 +105,7 @@ export function TaskCard({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="relative z-10 flex shrink-0 items-center gap-1">
           {onPostpone && !task.locked && !done && (
             <Tooltip label="Posponer 30 min">
               <button

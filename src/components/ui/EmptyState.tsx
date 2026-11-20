@@ -24,7 +24,7 @@ export function EmptyState({
         className,
       )}
     >
-      <CapacityRing value={ringValue} size="md" showValue={false} label="Sin carga" />
+      <CapacityRing value={ringValue} size="md" showValue={false} decorative />
       <div className="flex flex-col gap-1">
         <p className="text-body text-text">{title}</p>
         <p className="mx-auto max-w-xs text-aux text-muted">{description}</p>

@@ -7,6 +7,10 @@ import { useEffect, useRef } from 'react'
 export function useDismissable(open: boolean, onClose: () => void) {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const lastFocused = useRef<HTMLElement | null>(null)
+  // Guardamos el cierre en una ref: los llamadores pasan funciones nuevas en cada
+  // render y no queremos rearmar el efecto (ni mover el foco) a cada tecla.
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
 
   useEffect(() => {
     if (!open) return
@@ -31,7 +35,7 @@ export function useDismissable(open: boolean, onClose: () => void) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation()
-        onClose()
+        closeRef.current()
         return
       }
       if (event.key !== 'Tab') return
@@ -55,7 +59,7 @@ export function useDismissable(open: boolean, onClose: () => void) {
       document.body.style.overflow = previousOverflow
       lastFocused.current?.focus()
     }
-  }, [open, onClose])
+  }, [open])
 
   return panelRef
 }

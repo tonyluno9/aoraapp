@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, Clock3, Trash2, Wand2 } from 'lucide-react'
 import { Screen } from '@/components/layout/Screen'
-import { Button, Card, EmptyState, Modal, useToast } from '@/components/ui'
+import { Button, Card, EmptyState, Modal, buttonClasses, useToast } from '@/components/ui'
 import { TaskDetail } from '@/components/task/TaskDetail'
 import { TaskEditor } from '@/components/task/TaskEditor'
 import { useAppStore } from '@/store/useAppStore'
@@ -30,8 +30,8 @@ export function TaskDetailScreen() {
           title="Esa tarea ya no existe"
           description="Puede que la hayas eliminado o que el enlace sea viejo."
           action={
-            <Link to="/hoy">
-              <Button variant="primary">Volver a Hoy</Button>
+            <Link to="/hoy" className={buttonClasses({ variant: 'primary' })}>
+              Volver a Hoy
             </Link>
           }
         />

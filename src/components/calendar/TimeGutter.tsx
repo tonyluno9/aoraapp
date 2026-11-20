@@ -1,4 +1,5 @@
 import { minutesToClock } from '@/lib/dates'
+import { cn } from '@/lib/cn'
 
 interface TimeGutterProps {
   startMin: number
@@ -19,7 +20,11 @@ export function TimeGutter({ startMin, endMin, pxPerMin }: TimeGutterProps) {
       {hours.map((minute) => (
         <span
           key={minute}
-          className="absolute right-2 -translate-y-1/2 text-micro tabular-nums text-muted"
+          className={cn(
+            'absolute right-2 text-micro tabular-nums text-muted',
+            // La primera hora se pegaría al borde superior y quedaría cortada a la mitad.
+            minute === startMin ? 'translate-y-0.5' : '-translate-y-1/2',
+          )}
           style={{ top: (minute - startMin) * pxPerMin }}
         >
           {minutesToClock(minute)}

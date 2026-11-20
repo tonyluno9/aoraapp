@@ -25,11 +25,16 @@ export function Toggle({
       role="switch"
       aria-checked={checked}
       aria-label={label}
-      disabled={disabled || busy}
-      onClick={() => onChange(!checked)}
+      // Mientras carga no lo deshabilitamos: así el foco no se pierde.
+      aria-busy={busy || undefined}
+      aria-disabled={busy || undefined}
+      disabled={disabled}
+      onClick={() => {
+        if (!busy) onChange(!checked)
+      }}
       className={cn(
         'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border',
-        'transition-colors duration-150 ease-out disabled:opacity-40',
+        'transition-colors duration-150 ease-out disabled:opacity-40 aria-busy:cursor-progress',
         checked ? 'border-accent bg-accent' : 'border-line bg-elevated',
         className,
       )}

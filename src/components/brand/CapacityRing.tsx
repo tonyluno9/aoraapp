@@ -18,8 +18,10 @@ interface CapacityRingProps {
   /** Contenido alterno al centro del anillo. */
   children?: React.ReactNode
   className?: string
-  /** Etiqueta accesible del anillo. */
+  /** Etiqueta accesible del anillo. El porcentaje se agrega solo. */
   label?: string
+  /** Oculta el anillo a lectores de pantalla cuando solo adorna. */
+  decorative?: boolean
 }
 
 export function CapacityRing({
@@ -29,6 +31,7 @@ export function CapacityRing({
   children,
   className,
   label,
+  decorative = false,
 }: CapacityRingProps) {
   const reduceMotion = useReducedMotion()
   const { box, stroke } = GEOMETRY[size]
@@ -43,8 +46,12 @@ export function CapacityRing({
     <div
       className={cn('relative inline-flex shrink-0 items-center justify-center', className)}
       style={{ width: box, height: box }}
-      role="img"
-      aria-label={label ?? `Carga del ${Math.round(value)} por ciento`}
+      {...(decorative
+        ? { 'aria-hidden': true }
+        : {
+            role: 'img',
+            'aria-label': `${label ?? 'Carga'}: ${Math.round(value)} por ciento`,
+          })}
     >
       <svg width={box} height={box} viewBox={`0 0 ${box} ${box}`} aria-hidden="true">
         <circle

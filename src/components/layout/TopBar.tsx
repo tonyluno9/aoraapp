@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { PALETTE_SHORTCUT } from '@/lib/platform'
 import { Mic, Search } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { Logo } from '@/components/brand/Logo'
@@ -15,6 +17,10 @@ export function TopBar({ onCapture, onSearch }: TopBarProps) {
     ? 'Tarea'
     : (SCREEN_TITLE[location.pathname] ?? 'AORAA Task')
 
+  useEffect(() => {
+    document.title = title === 'AORAA Task' ? title : `${title} · AORAA Task`
+  }, [title])
+
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-line bg-ink/90 px-4 py-3 backdrop-blur nav:px-8">
       <div className="flex items-center gap-3">
@@ -28,7 +34,7 @@ export function TopBar({ onCapture, onSearch }: TopBarProps) {
         <Button variant="ghost" size="sm" onClick={onSearch} aria-label="Buscar o saltar">
           <Search size={16} aria-hidden="true" />
           <span className="hidden nav:inline">Buscar</span>
-          <span className="hidden text-micro text-muted nav:inline">⌘K</span>
+          <span className="hidden text-micro text-muted nav:inline">{PALETTE_SHORTCUT}</span>
         </Button>
         <span className="hidden nav:inline">
           <Button variant="secondary" size="sm" onClick={onCapture}>

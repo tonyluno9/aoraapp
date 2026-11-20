@@ -64,6 +64,10 @@ export function WeekScreen() {
             <p className="text-aux text-muted">
               Arrastra un bloque a otro día u hora. Los bloques fijos no se mueven.
             </p>
+            <p id="week-move-hint" className="sr-only">
+              Con el teclado: Alt más flechas arriba y abajo mueve 15 minutos; Alt más flechas
+              izquierda y derecha cambia de día.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button

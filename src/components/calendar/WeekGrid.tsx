@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import type { Availability, Task } from '@/lib/types'
 import {
   DAY_INITIAL,
+  addDays,
   atMinutes,
+  startOfDay,
+  toDate,
   isSameDate,
   minutesOfDay,
   roundToQuarter,
@@ -110,6 +113,21 @@ export function WeekGrid({ days, tasks, availability, onMove, onSelectDay }: Wee
     })
   }
 
+  const onBlockKeyMove = (task: Task, dayDelta: number, minuteDelta: number) => {
+    if (task.locked || !task.scheduledAt) return
+    const current = toDate(task.scheduledAt)
+    const minutes = Math.max(
+      0,
+      Math.min(24 * 60 - task.durationMin, minutesOfDay(current) + minuteDelta),
+    )
+    const targetDay = addDays(startOfDay(current), dayDelta)
+    onMove(task.id, atMinutes(targetDay, minutes).toISOString())
+    // Si cambió de columna, el bloque se vuelve a montar: le devolvemos el foco.
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>(`[data-task-id="${task.id}"]`)?.focus()
+    })
+  }
+
   const onBlockClick = (task: Task) => {
     if (movedRef.current) {
       movedRef.current = false
@@ -148,7 +166,7 @@ export function WeekGrid({ days, tasks, availability, onMove, onSelectDay }: Wee
                     {day.getDate()}
                   </span>
                 </span>
-                <CapacityRing value={capacity.percent} size="sm" label={`${capacity.percent}%`} />
+                <CapacityRing value={capacity.percent} size="sm" decorative />
                 <span
                   className={cn(
                     'text-micro tabular-nums',
@@ -180,6 +198,7 @@ export function WeekGrid({ days, tasks, availability, onMove, onSelectDay }: Wee
               dragOffset={{ x: drag?.dx ?? 0, y: drag?.dy ?? 0 }}
               onBlockPointerDown={onBlockPointerDown}
               onBlockClick={onBlockClick}
+              onBlockKeyMove={onBlockKeyMove}
             />
           ))}
         </div>

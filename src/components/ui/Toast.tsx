@@ -35,7 +35,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     (options: ToastOptions) => {
       const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
       setItems((current) => [...current.slice(-2), { ...options, id }])
-      const timer = window.setTimeout(() => dismiss(id), options.durationMs ?? 4000)
+      // Con una acción (por ejemplo, Deshacer) damos más tiempo para alcanzarla con el teclado.
+      const duration = options.durationMs ?? (options.actionLabel ? 10000 : 4000)
+      const timer = window.setTimeout(() => dismiss(id), duration)
       timers.current.set(id, timer)
     },
     [dismiss],

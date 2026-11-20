@@ -1,4 +1,4 @@
-export { Button } from './Button'
+export { Button, buttonClasses } from './Button'
 export type { ButtonProps } from './Button'
 export { Card } from './Card'
 export { Chip } from './Chip'

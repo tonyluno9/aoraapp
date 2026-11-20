@@ -18,6 +18,32 @@ const SIZES: Record<Size, string> = {
   lg: 'h-12 px-5 text-body gap-2',
 }
 
+/** Clases de un botón, para dar el mismo aspecto a un enlace sin anidar controles. */
+export function buttonClasses({
+  variant = 'secondary',
+  size = 'md',
+  iconOnly = false,
+  fullWidth = false,
+  className,
+}: {
+  variant?: Variant
+  size?: Size
+  iconOnly?: boolean
+  fullWidth?: boolean
+  className?: string
+} = {}): string {
+  return cn(
+    'inline-flex items-center justify-center rounded-button font-medium',
+    'transition-colors duration-150 ease-out',
+    'disabled:cursor-not-allowed disabled:opacity-40',
+    VARIANTS[variant],
+    SIZES[size],
+    iconOnly && (size === 'sm' ? 'w-8 px-0' : size === 'md' ? 'w-10 px-0' : 'w-12 px-0'),
+    fullWidth && 'w-full',
+    className,
+  )
+}
+
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
   size?: Size
@@ -47,16 +73,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       type={type}
       disabled={disabled || loading}
-      className={cn(
-        'inline-flex items-center justify-center rounded-button font-medium',
-        'transition-colors duration-150 ease-out',
-        'disabled:cursor-not-allowed disabled:opacity-40',
-        VARIANTS[variant],
-        SIZES[size],
-        iconOnly && (size === 'sm' ? 'w-8 px-0' : size === 'md' ? 'w-10 px-0' : 'w-12 px-0'),
-        fullWidth && 'w-full',
-        className,
-      )}
+      className={buttonClasses({ variant, size, iconOnly, fullWidth, className })}
       {...rest}
     >
       {loading ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : children}

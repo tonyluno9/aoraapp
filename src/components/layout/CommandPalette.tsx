@@ -224,20 +224,45 @@ export function CommandPalette() {
                 onKeyDown={onKeyDown}
                 placeholder="Busca una tarea o salta a una pantalla"
                 aria-label="Buscar"
+                role="combobox"
+                aria-expanded="true"
+                aria-controls="command-list"
+                aria-autocomplete="list"
+                aria-activedescendant={
+                  commands[cursor] ? `command-${commands[cursor].id}` : undefined
+                }
                 className="w-full bg-transparent text-body text-text placeholder:text-muted focus:outline-none"
               />
             </div>
 
-            <ul className="scrollbar-thin max-h-80 overflow-y-auto py-2">
-              {commands.length === 0 && (
-                <li className="px-4 py-6 text-center text-aux text-muted">
-                  Nada coincide con &ldquo;{query}&rdquo;.
-                </li>
-              )}
+            <p className="sr-only" aria-live="polite">
+              {commands.length === 0
+                ? 'Sin resultados'
+                : `${commands.length} ${commands.length === 1 ? 'resultado' : 'resultados'}`}
+            </p>
+
+            {commands.length === 0 && (
+              <p className="px-4 py-6 text-center text-aux text-muted">
+                Nada coincide con &ldquo;{query}&rdquo;.
+              </p>
+            )}
+
+            <ul
+              id="command-list"
+              role="listbox"
+              aria-label="Resultados"
+              className="scrollbar-thin max-h-80 overflow-y-auto py-2 empty:hidden"
+            >
               {commands.map((command, index) => (
-                <li key={command.id}>
+                <li
+                  key={command.id}
+                  id={`command-${command.id}`}
+                  role="option"
+                  aria-selected={index === cursor}
+                >
                   <button
                     type="button"
+                    tabIndex={-1}
                     onClick={command.run}
                     onMouseEnter={() => setCursor(index)}
                     className={cn(

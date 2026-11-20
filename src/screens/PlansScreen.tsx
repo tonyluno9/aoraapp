@@ -131,7 +131,10 @@ function PlanCard({
             ) : (
               <Minus size={14} className="text-muted" aria-hidden="true" />
             )}
-            <span className={feature.included ? 'text-text' : 'text-muted'}>{feature.label}</span>
+            <span className={feature.included ? 'text-text' : 'text-muted'}>
+              <span className="sr-only">{feature.included ? 'Incluye: ' : 'No incluye: '}</span>
+              {feature.label}
+            </span>
           </li>
         ))}
       </ul>
