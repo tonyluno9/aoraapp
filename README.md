@@ -20,6 +20,12 @@ AORAA Task es un **prototipo de alta fidelidad** de una app web de gestión inte
 
 La interfaz está en español de México y solo tiene tema oscuro.
 
+## Demo en línea
+
+**https://tonyluno9.github.io/aoraapp/**
+
+Se publica sola en GitHub Pages con cada push a `main` (ver `.github/workflows/deploy.yml`).
+
 ## Cómo correrlo
 
 Requisitos: Node.js 18 o superior.
