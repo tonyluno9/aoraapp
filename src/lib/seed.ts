@@ -192,7 +192,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'media',
       durationMin: 45,
       day: tuesday,
-      startMin: 15 * 60,
+      startMin: 8 * 60 + 15,
     },
     {
       id: 'seed-04',
@@ -233,7 +233,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'baja',
       durationMin: 45,
       day: tuesday,
-      startMin: 20 * 60,
+      startMin: 21 * 60,
     },
     {
       id: 'seed-08',
@@ -242,7 +242,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'media',
       durationMin: 120,
       day: tuesday,
-      startMin: 21 * 60,
+      startMin: 21 * 60 + 45,
     },
 
     // Completadas.
@@ -253,7 +253,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'alta',
       durationMin: 45,
       day: addDays(today, -1),
-      startMin: 10 * 60,
+      startMin: 14 * 60 + 15,
       status: 'completada',
     },
     {
@@ -283,7 +283,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'media',
       durationMin: 30,
       day: addDays(today, -2),
-      startMin: 16 * 60 + 30,
+      startMin: 15 * 60 + 30,
       status: 'completada',
     },
     {
@@ -293,7 +293,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'baja',
       durationMin: 30,
       day: addDays(today, -3),
-      startMin: 18 * 60,
+      startMin: 14 * 60 + 45,
       status: 'completada',
     },
     {
@@ -315,7 +315,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'media',
       durationMin: 60,
       day: addDays(today, -2),
-      startMin: 11 * 60,
+      startMin: 14 * 60,
       status: 'vencida',
       deadlineDay: addDays(today, -1),
       notes: 'Llevar comprobante de inscripción y una foto tamaño infantil.',
@@ -327,7 +327,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'alta',
       durationMin: 45,
       day: addDays(today, -1),
-      startMin: 12 * 60,
+      startMin: 15 * 60 + 15,
       status: 'vencida',
       deadlineDay: addDays(today, -1),
     },
@@ -338,7 +338,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'media',
       durationMin: 15,
       day: addDays(today, -3),
-      startMin: 9 * 60 + 30,
+      startMin: 14 * 60 + 15,
       status: 'vencida',
       deadlineDay: addDays(today, -2),
     },
@@ -397,7 +397,7 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priority: 'alta',
       durationMin: 90,
       day: skipSunday(addDays(today, 1)),
-      startMin: 15 * 60,
+      startMin: 14 * 60,
       deadlineDay: skipSunday(addDays(today, 2)),
     },
     {

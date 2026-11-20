@@ -27,13 +27,15 @@ export function OverloadScreen() {
 
   const day = useMemo(() => {
     const raw = params.get('dia')
-    return raw ? toDate(`${raw}T12:00:00`) : new Date()
+    // Una fecha mal escrita en la dirección no debe romper la pantalla: se usa hoy.
+    const parsed = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? toDate(`${raw}T12:00:00`) : null
+    return parsed && !Number.isNaN(parsed.getTime()) ? parsed : new Date()
   }, [params])
 
   const capacity = computeDayCapacity(day, tasks, availability)
   const suggestions = overloadSuggestions(day, tasks, availability)
   const dayTasks = tasksOfDay(day, tasks)
-  const overloaded = capacity.percent > 100
+  const overloaded = capacity.overloaded
   const name = DAY_NAME[day.getDay()]
   const isToday = isSameDate(day, new Date())
 
@@ -50,6 +52,7 @@ export function OverloadScreen() {
         <Card className="flex flex-col items-center gap-6 sm:flex-row sm:gap-8">
           <CapacityRing
             value={capacity.percent}
+            overloaded={capacity.overloaded}
             size="lg"
             label={`Carga del ${name}`}
           />

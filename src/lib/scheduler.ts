@@ -147,7 +147,7 @@ export function scheduleTasks(
         placements.push({
           taskId: task.id,
           scheduledAt: scheduledAt.toISOString(),
-          explanation: `Colocada ${dayWord(day, from)} a las ${minutesToClock(start)} porque ${reason}.`,
+          explanation: `Colocada ${dayWord(day, new Date())} a las ${minutesToClock(start)} porque ${reason}.`,
         })
 
         busy.push({ ...task, scheduledAt: scheduledAt.toISOString(), status: 'programada' })
@@ -166,6 +166,52 @@ export function scheduleTasks(
   }
 
   return { placements, conflicts }
+}
+
+/**
+ * Revisa si una hora fija (la que dijo la persona o la que eligió al ajustar)
+ * choca con su horario, sus bloques fijos u otra tarea. Devuelve el aviso o null.
+ */
+export function findTimeClash(
+  scheduledAt: string,
+  durationMin: number,
+  others: Pick<Task, 'title' | 'scheduledAt' | 'durationMin' | 'status'>[],
+  availability: Availability,
+): string | null {
+  const date = toDate(scheduledAt)
+  const weekday = date.getDay()
+  const start = minutesOfDay(date)
+  const end = start + durationMin
+
+  if (!availability.days.includes(weekday)) {
+    return `Ojo: el ${DAY_NAME[weekday]} no está entre tus días disponibles.`
+  }
+
+  for (const block of availability.fixedBlocks) {
+    if (!block.days.includes(weekday)) continue
+    if (start < block.endMin && end > block.startMin) {
+      return `Ojo: choca con tu bloque fijo "${block.label}" (${minutesToClock(
+        block.startMin,
+      )} a ${minutesToClock(block.endMin)}).`
+    }
+  }
+
+  for (const other of others) {
+    if (!other.scheduledAt || other.status === 'completada') continue
+    if (!isSameDate(other.scheduledAt, date)) continue
+    const otherStart = minutesOfDay(other.scheduledAt)
+    if (start < otherStart + other.durationMin && end > otherStart) {
+      return `Ojo: se encima con "${other.title}" a las ${minutesToClock(otherStart)}.`
+    }
+  }
+
+  if (start < availability.startMin || end > availability.endMin) {
+    return `Ojo: queda fuera de tu horario (${minutesToClock(
+      availability.startMin,
+    )} a ${minutesToClock(availability.endMin)}).`
+  }
+
+  return null
 }
 
 /** Sugiere el siguiente hueco libre para una tarea concreta. */

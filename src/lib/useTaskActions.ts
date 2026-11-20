@@ -1,7 +1,8 @@
 import { useToast } from '@/components/ui'
-import { useAppStore } from '@/store/useAppStore'
+import { useAppStore, visibleTasks } from '@/store/useAppStore'
 import type { Task } from '@/lib/types'
 import { formatDuration } from '@/lib/dates'
+import { findTimeClash } from '@/lib/scheduler'
 
 /** Acciones de tarea con su aviso emergente y su deshacer. */
 export function useTaskActions() {
@@ -23,8 +24,21 @@ export function useTaskActions() {
 
   const postpone = (task: Task, minutes = 30) => {
     postponeTask(task.id, minutes)
+    // Tras posponer, avisa si ahora choca con otra tarea, un bloque fijo o el fin del horario.
+    const state = useAppStore.getState()
+    const moved = state.tasks.find((item) => item.id === task.id)
+    const clash = moved?.scheduledAt
+      ? findTimeClash(
+          moved.scheduledAt,
+          moved.durationMin,
+          visibleTasks(state.tasks, state.integrations).filter((item) => item.id !== task.id),
+          state.availability,
+        )
+      : null
     toast({
-      message: `Pospuesta ${formatDuration(minutes)}`,
+      message: clash
+        ? `Pospuesta ${formatDuration(minutes)}. ${clash}`
+        : `Pospuesta ${formatDuration(minutes)}`,
       actionLabel: 'Deshacer',
       onAction: () => postponeTask(task.id, -minutes),
     })

@@ -50,6 +50,10 @@ export function ScheduleSetupScreen() {
       setError('Elige al menos un día.')
       return
     }
+    if (!start || !end) {
+      setError('Elige la hora de inicio y la de fin.')
+      return
+    }
     if (clockToMinutes(end) <= clockToMinutes(start)) {
       setError('La hora de fin debe ir después de la de inicio.')
       return

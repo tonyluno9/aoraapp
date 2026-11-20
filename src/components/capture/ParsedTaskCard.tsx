@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react'
+import { Sparkles, TriangleAlert } from 'lucide-react'
 import type { Category } from '@/lib/types'
 import { CATEGORIES } from '@/lib/types'
 import { Card, Chip, Field, Input, Select } from '@/components/ui'
@@ -29,12 +29,14 @@ export interface CaptureDraft {
 interface ParsedTaskCardProps {
   draft: CaptureDraft
   adjusting: boolean
+  /** Aviso si la hora elegida choca con el horario, un bloque fijo u otra tarea. */
+  warning?: string | null
   onChange: (patch: Partial<CaptureDraft>) => void
 }
 
-const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180]
+const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180, 240]
 
-export function ParsedTaskCard({ draft, adjusting, onChange }: ParsedTaskCardProps) {
+export function ParsedTaskCard({ draft, adjusting, warning, onChange }: ParsedTaskCardProps) {
   const scheduled = draft.scheduledAt ? toDate(draft.scheduledAt) : null
   const dayOptions = Array.from({ length: 14 }, (_, index) => addDays(startOfDay(new Date()), index))
 
@@ -49,6 +51,13 @@ export function ParsedTaskCard({ draft, adjusting, onChange }: ParsedTaskCardPro
         <Sparkles size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
         {draft.conflict ?? draft.explanation}
       </p>
+
+      {warning && (
+        <p role="status" className="flex items-start gap-2 text-aux text-warn">
+          <TriangleAlert size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
+          {warning}
+        </p>
+      )}
 
       {!adjusting && scheduled && (
         <p className="text-aux text-text">
@@ -71,6 +80,7 @@ export function ParsedTaskCard({ draft, adjusting, onChange }: ParsedTaskCardPro
                 {...props}
                 value={scheduled ? dayKey(scheduled) : ''}
                 onChange={(event) => {
+                  if (!event.target.value) return
                   const day = toDate(`${event.target.value}T00:00:00`)
                   const minutes = scheduled ? minutesOfDay(scheduled) : 9 * 60
                   onChange({ scheduledAt: atMinutes(day, minutes).toISOString() })
@@ -94,6 +104,8 @@ export function ParsedTaskCard({ draft, adjusting, onChange }: ParsedTaskCardPro
                 step={900}
                 value={scheduled ? formatTime(scheduled) : ''}
                 onChange={(event) => {
+                  // Mientras se borra la hora el campo queda vacío: no hay nada que guardar.
+                  if (!event.target.value) return
                   const [hours, minutes] = event.target.value.split(':').map(Number)
                   const base = scheduled ?? new Date()
                   onChange({
@@ -111,7 +123,7 @@ export function ParsedTaskCard({ draft, adjusting, onChange }: ParsedTaskCardPro
                 value={String(draft.durationMin)}
                 onChange={(event) => onChange({ durationMin: Number(event.target.value) })}
               >
-                {DURATIONS.map((value) => (
+                {withCurrent(DURATIONS, draft.durationMin).map((value) => (
                   <option key={value} value={value}>
                     {formatDuration(value)}
                   </option>
@@ -149,4 +161,9 @@ export function ParsedTaskCard({ draft, adjusting, onChange }: ParsedTaskCardPro
       )}
     </Card>
   )
+}
+
+/** Las duraciones de la lista más la que ya tiene la tarea (p. ej. 20 min o 1 h 15). */
+function withCurrent(options: number[], current: number): number[] {
+  return options.includes(current) ? options : [...options, current].sort((a, b) => a - b)
 }

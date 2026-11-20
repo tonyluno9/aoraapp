@@ -12,6 +12,8 @@ export interface ParsedTask {
   scheduledAt: string | null
   /** ISO cuando la frase trae fecha límite o solo un día. */
   deadline: string | null
+  /** ISO del día que dijo la persona ("mañana", "el jueves") sin hora: la tarea va ese día. */
+  preferredDay: string | null
   /** Fragmento original del que salió la tarea. */
   raw: string
 }
@@ -257,8 +259,9 @@ function extractDay(fragment: Fragment, now: Date): DayResult | null {
   if (weekdayMatch) {
     fragment.consume(weekdayMatch)
     const isDeadline = DEADLINE_PREFIX.test(weekdayMatch[1] ?? '')
+    // "El viernes" dicho un viernes es el de la próxima semana; "este viernes" sí es hoy.
     return {
-      date: nextWeekday(today, WEEKDAYS[weekdayMatch[2]], true),
+      date: nextWeekday(today, WEEKDAYS[weekdayMatch[2]], weekdayMatch[1] === 'este'),
       isDeadline,
     }
   }
@@ -455,7 +458,14 @@ function cleanTitle(text: string): string {
     }
   }
 
-  title = title.replace(/[\s,;.]+$/, '').trim()
+  // Conectores que quedan colgando al final cuando se quitó la hora, el día o la duración
+  // ("junta con mi jefe de [una hora]", "el reporte de Cálculo y el").
+  const TRAILING = /[\s,;.]+$|\s+(?:de|del|por|durante|para|a|al|en|con|la|el|los|las|y|e|o)$/i
+  let trimmed = title
+  do {
+    title = trimmed
+    trimmed = title.replace(TRAILING, '').trim()
+  } while (trimmed !== title)
   if (title.length === 0) return 'Tarea nueva'
   return title.charAt(0).toUpperCase() + title.slice(1)
 }
@@ -497,6 +507,7 @@ export function parsePhrase(text: string, now: Date = new Date()): ParsedTask[] 
 
     let scheduledAt: Date | null = null
     let deadline: Date | null = null
+    let preferredDay: Date | null = null
 
     if (day) {
       if (day.isDeadline) {
@@ -508,6 +519,7 @@ export function parsePhrase(text: string, now: Date = new Date()): ParsedTask[] 
         deadline = atMinutes(candidate, 23 * 60 + 59)
       } else {
         deadline = atMinutes(day.date, 23 * 60 + 59)
+        preferredDay = day.date
       }
     } else if (time !== null) {
       let candidate = atMinutes(now, time)
@@ -524,6 +536,7 @@ export function parsePhrase(text: string, now: Date = new Date()): ParsedTask[] 
       durationMin,
       scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
       deadline: deadline ? deadline.toISOString() : null,
+      preferredDay: preferredDay ? preferredDay.toISOString() : null,
       raw,
     }
   })

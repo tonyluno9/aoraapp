@@ -7,11 +7,13 @@ import { Button, Card, Skeleton, useToast } from '@/components/ui'
 import { useAppStore, useVisibleTasks } from '@/store/useAppStore'
 import { useSkeleton } from '@/lib/useSkeleton'
 import { computeDayCapacity } from '@/lib/capacity'
+import { findTimeClash } from '@/lib/scheduler'
 import {
   DAY_NAME,
   addDays,
   dayKey,
   formatTime,
+  isSameDate,
   toDate,
   weekDates,
   weekStart,
@@ -28,6 +30,7 @@ export function WeekScreen() {
 
   const [anchor, setAnchor] = useState(() => weekStart(new Date()))
   const days = weekDates(anchor)
+  const visibleIds = new Set(tasks.map((item) => item.id))
 
   const onMove = (taskId: string, scheduledAtISO: string) => {
     const task = allTasks.find((item) => item.id === taskId)
@@ -44,12 +47,28 @@ export function WeekScreen() {
       ? computeDayCapacity(toDate(previous), nextTasks, availability)
       : null
 
+    const targetName = DAY_NAME[target.getDay()]
+    const sameDay = previous ? isSameDate(previous, target) : false
+    let message: string
+    if (!originLoad) {
+      message = `Movida al ${targetName} a las ${formatTime(target)}.`
+    } else if (sameDay) {
+      message = `Movida a las ${formatTime(target)}. El ${targetName} queda al ${targetLoad.percent}%.`
+    } else {
+      const originName = DAY_NAME[toDate(previous as string).getDay()]
+      message = `Movida al ${targetName} a las ${formatTime(target)}. El ${originName} queda al ${originLoad.percent}% y el ${targetName} al ${targetLoad.percent}%.`
+    }
+
+    const clash = findTimeClash(
+      scheduledAtISO,
+      task.durationMin,
+      nextTasks.filter((item) => item.id !== taskId && visibleIds.has(item.id)),
+      availability,
+    )
+    if (clash) message = `${message} ${clash}`
+
     toast({
-      message: originLoad
-        ? `Movida al ${DAY_NAME[target.getDay()]} ${formatTime(target)}. ${
-            DAY_NAME[toDate(previous as string).getDay()]
-          } ${originLoad.percent}%, ${DAY_NAME[target.getDay()]} ${targetLoad.percent}%.`
-        : `Movida al ${DAY_NAME[target.getDay()]} a las ${formatTime(target)}.`,
+      message,
       actionLabel: 'Deshacer',
       onAction: () => moveTask(taskId, previous ?? scheduledAtISO),
     })

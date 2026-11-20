@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Check, ChevronRight, Clock3, Lock, RefreshCw } from 'lucide-react'
 import type { Task } from '@/lib/types'
-import { formatDuration, formatTime } from '@/lib/dates'
+import { formatDuration, formatRelativeDay, formatTime } from '@/lib/dates'
 import { Chip, Tooltip } from '@/components/ui'
 import { IntegrationIcon } from '@/integrations/icons'
 import { cn } from '@/lib/cn'
@@ -80,7 +80,11 @@ export function TaskCard({
           <div className="flex flex-wrap items-center gap-1.5">
             <Chip>{task.category}</Chip>
             {task.priority === 'alta' && !done && <Chip tone="accent">alta</Chip>}
-            {task.status === 'vencida' && <Chip tone="danger">vencida</Chip>}
+            {task.status === 'vencida' && (
+              <Chip tone="danger">
+                {task.scheduledAt ? `vencida · ${formatRelativeDay(task.scheduledAt)}` : 'vencida'}
+              </Chip>
+            )}
             {!showTime && (
               <Chip>
                 <Clock3 size={10} aria-hidden="true" />

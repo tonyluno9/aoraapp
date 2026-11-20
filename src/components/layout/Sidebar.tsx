@@ -46,7 +46,7 @@ export function Sidebar({ today, onCapture }: SidebarProps) {
 
       <div className="mt-auto flex flex-col gap-4">
         <div className="flex items-center gap-3 rounded-card border border-line bg-elevated p-3">
-          <CapacityRing value={today.percent} size="sm" label="Carga de hoy" />
+          <CapacityRing value={today.percent} overloaded={today.overloaded} size="sm" label="Carga de hoy" />
           <div className="flex flex-col">
             <span className="text-aux text-text">Hoy al {today.percent}%</span>
             <span className="text-micro text-muted">

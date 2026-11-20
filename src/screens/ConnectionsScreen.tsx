@@ -68,7 +68,9 @@ export function ConnectionsScreen() {
                     <p className="text-aux text-muted">{integration.description}</p>
                     {count > 0 && (
                       <p className="text-micro text-muted">
-                        {count} {count === 1 ? 'evento' : 'eventos'} en tu calendario
+                        {integration.connected
+                          ? `${count} ${count === 1 ? 'evento' : 'eventos'} en tu calendario`
+                          : `${count} ${count === 1 ? 'evento oculto' : 'eventos ocultos'} hasta que lo vuelvas a conectar`}
                       </p>
                     )}
                   </div>

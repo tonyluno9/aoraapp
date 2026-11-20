@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { TopBar } from './TopBar'
@@ -20,6 +20,8 @@ export function AppShell() {
   const availability = useAppStore((state) => state.availability)
   const refreshStatuses = useAppStore((state) => state.refreshStatuses)
   const tasks = useVisibleTasks()
+  const onboarded = useAppStore((state) => state.onboarded)
+  const authed = useAppStore((state) => state.authed)
 
   useShortcuts()
 
@@ -50,6 +52,10 @@ export function AppShell() {
   }
 
   const todayCapacity = computeDayCapacity(new Date(), tasks, availability)
+
+  // Las pantallas de adentro solo se ven con sesión iniciada.
+  if (!onboarded) return <Navigate to="/bienvenida" replace />
+  if (!authed) return <Navigate to="/entrar" replace />
 
   return (
     <div className="flex min-h-screen bg-ink">

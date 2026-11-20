@@ -42,7 +42,7 @@ export function TodayScreen() {
     for (let offset = 1; offset <= 7; offset += 1) {
       const day = addDays(startOfDay(today), offset)
       const dayCapacity = computeDayCapacity(day, tasks, availability)
-      if (dayCapacity.percent > 100) return { day, capacity: dayCapacity }
+      if (dayCapacity.overloaded) return { day, capacity: dayCapacity }
     }
     return null
   }, [today, tasks, availability])
@@ -63,7 +63,7 @@ export function TodayScreen() {
           <Skeleton className="h-40 w-full" />
         ) : (
           <Card className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-8">
-            <CapacityRing value={capacity.percent} size="lg" label="Carga de hoy" />
+            <CapacityRing value={capacity.percent} overloaded={capacity.overloaded} size="lg" label="Carga de hoy" />
             <div className="flex flex-1 flex-col gap-2 text-center sm:text-left">
               <p className="text-subtitle text-text">{STATE_LABEL[capacity.state]}</p>
               <p className="text-aux text-muted">
@@ -73,14 +73,14 @@ export function TodayScreen() {
               <p className="text-aux text-muted">
                 {capacity.availableMin === 0
                   ? 'Hoy no tienes horario disponible.'
-                  : capacity.percent > 100
+                  : capacity.overloaded
                     ? `Te sobran ${formatDuration(
                         capacity.scheduledMin - capacity.availableMin,
                       )} sin dónde caber.`
                     : `Te quedan ${formatDuration(capacity.freeMin)} libres.`}
               </p>
             </div>
-            {capacity.percent > 100 && (
+            {capacity.overloaded && (
               <Link
                 to={`/sobrecarga?dia=${dayKey(today)}`}
                 className={buttonClasses({ variant: 'secondary', className: 'w-full sm:w-auto' })}

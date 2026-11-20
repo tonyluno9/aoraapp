@@ -15,7 +15,7 @@ const STEPS = [
   },
   {
     title: 'Habla como hablas',
-    body: '"Mañana entrego el reporte y el viernes voy al dentista a las cinco" es suficiente. AORAA entiende días, horas y duraciones.',
+    body: '"Mañana entrego el reporte y el viernes voy al dentista a las tres" es suficiente. AORAA entiende días, horas y duraciones.',
   },
   {
     title: 'Sabrás si te cabe',

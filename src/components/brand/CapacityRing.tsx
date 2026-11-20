@@ -12,6 +12,8 @@ const GEOMETRY: Record<RingSize, { box: number; stroke: number }> = {
 interface CapacityRingProps {
   /** Porcentaje de carga. Puede pasar de 100. */
   value: number
+  /** Fuerza el color de sobrecarga aunque el porcentaje no pase de 100. */
+  overloaded?: boolean
   size?: RingSize
   /** Muestra el porcentaje al centro. */
   showValue?: boolean
@@ -26,6 +28,7 @@ interface CapacityRingProps {
 
 export function CapacityRing({
   value,
+  overloaded: forceOverloaded,
   size = 'md',
   showValue,
   children,
@@ -39,7 +42,7 @@ export function CapacityRing({
   const circumference = 2 * Math.PI * radius
   const filled = Math.max(0, Math.min(100, value))
   const offset = circumference * (1 - filled / 100)
-  const overloaded = value > 100
+  const overloaded = forceOverloaded ?? value > 100
   const withValue = showValue ?? size !== 'sm'
 
   return (

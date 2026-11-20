@@ -13,9 +13,23 @@ const VARIANTS: Record<Variant, string> = {
 }
 
 const SIZES: Record<Size, string> = {
-  sm: 'h-8 px-3 text-aux gap-1.5',
-  md: 'h-10 px-4 text-aux gap-2',
-  lg: 'h-12 px-5 text-body gap-2',
+  sm: 'h-8 text-aux gap-1.5',
+  md: 'h-10 text-aux gap-2',
+  lg: 'h-12 text-body gap-2',
+}
+
+// El relleno va aparte: `cn` no resuelve choques de Tailwind, así que un botón de
+// solo ícono no debe recibir también el relleno lateral (si no, el ícono se aplasta).
+const PADDING: Record<Size, string> = {
+  sm: 'px-3',
+  md: 'px-4',
+  lg: 'px-5',
+}
+
+const ICON_WIDTH: Record<Size, string> = {
+  sm: 'w-8',
+  md: 'w-10',
+  lg: 'w-12',
 }
 
 /** Clases de un botón, para dar el mismo aspecto a un enlace sin anidar controles. */
@@ -38,7 +52,7 @@ export function buttonClasses({
     'disabled:cursor-not-allowed disabled:opacity-40',
     VARIANTS[variant],
     SIZES[size],
-    iconOnly && (size === 'sm' ? 'w-8 px-0' : size === 'md' ? 'w-10 px-0' : 'w-12 px-0'),
+    iconOnly ? `${ICON_WIDTH[size]} shrink-0` : PADDING[size],
     fullWidth && 'w-full',
     className,
   )

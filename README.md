@@ -8,8 +8,8 @@ AORAA Task es un **prototipo de alta fidelidad** de una app web de gestión inte
 
 ## Qué hace
 
-- **Captura en lenguaje natural.** Una frase como *"Mañana tengo que entregar el reporte de Cálculo, el viernes voy al dentista a las cinco y necesito estudiar para el examen del martes"* se convierte en tres tareas con día, hora, duración, categoría y prioridad.
-- **Dictado simulado.** El modo de voz reproduce la frase de demostración palabra por palabra; no usa el micrófono.
+- **Captura en lenguaje natural.** Una frase como *"Mañana tengo que entregar el reporte de Cálculo, el viernes voy al dentista a las tres y necesito estudiar para el examen del martes"* se convierte en tres tareas con día, hora, duración, categoría y prioridad.
+- **Dictado por voz.** El modo de voz usa el micrófono con el reconocimiento de voz del navegador (Safari o Chrome). Si no hay permiso o el navegador no lo soporta, puedes usar la frase de demostración, que se escribe palabra por palabra sin micrófono.
 - **Agendado automático.** Un motor voraz coloca cada tarea en el primer hueco libre antes de su fecha límite, respetando tu horario, tus bloques fijos y una holgura entre tareas. Cada decisión trae su explicación.
 - **Anillo de carga.** Cada día muestra qué porcentaje de tu tiempo disponible ya está ocupado. Arriba de 100% el anillo cambia a ámbar.
 - **Sugerencias de sobrecarga.** Si un día se pasa, la app propone tres arreglos con tus tareas reales: mover, recortar o eliminar.

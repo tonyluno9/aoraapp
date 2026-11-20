@@ -57,7 +57,7 @@ export function TaskDetail({ task, capacity }: TaskDetailProps) {
 
       {capacity && (
         <div className="flex items-center gap-3 border-t border-line pt-4">
-          <CapacityRing value={capacity.percent} size="sm" label="Carga de ese día" />
+          <CapacityRing value={capacity.percent} overloaded={capacity.overloaded} size="sm" label="Carga de ese día" />
           <p className="text-aux text-muted">
             Ese día va al {capacity.percent}%. {STATE_LABEL[capacity.state]}, con{' '}
             {formatDuration(capacity.freeMin)} libres.

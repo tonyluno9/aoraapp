@@ -9,6 +9,8 @@ export interface DayCapacity {
   availableMin: number
   freeMin: number
   taskCount: number
+  /** Hay más tareas que tiempo; también cuando el día no tiene horario y aun así tiene tareas. */
+  overloaded: boolean
 }
 
 export function capacityState(percent: number): CapacityState {
@@ -57,10 +59,13 @@ export function computeDayCapacity(
         ? 100
         : 0
 
+  const overloaded = scheduledMin > availableMin
+
   return {
     dateISO: dayKey(day),
     percent,
-    state: capacityState(percent),
+    state: overloaded ? 'sobrecargado' : capacityState(percent),
+    overloaded,
     scheduledMin,
     availableMin,
     freeMin: Math.max(0, availableMin - scheduledMin),
@@ -135,7 +140,7 @@ export function overloadSuggestions(
       id: `recortar-${longest.id}`,
       kind: 'recortar',
       title: `Recortar "${longest.title}" a ${formatDuration(trimmed)}`,
-      detail: `Hoy le diste ${formatDuration(longest.durationMin)}; liberas ${formatDuration(
+      detail: `Ahora tiene ${formatDuration(longest.durationMin)}; liberas ${formatDuration(
         longest.durationMin - trimmed,
       )}.`,
       taskId: longest.id,

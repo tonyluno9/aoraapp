@@ -4,10 +4,11 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Keyboard, Mic, Sparkles } from 'lucide-react'
 import { Button, Field, Sheet, Textarea, useToast } from '@/components/ui'
 import { CapacityRing } from '@/components/brand/CapacityRing'
-import { useAppStore } from '@/store/useAppStore'
+import { useAppStore, visibleTasks } from '@/store/useAppStore'
 import { DEMO_DICTATION, STAGE_LABEL, interpretWithAI, type AIStage } from '@/lib/fakeAI'
-import { scheduleTasks } from '@/lib/scheduler'
-import { formatTime } from '@/lib/dates'
+import { findTimeClash, scheduleTasks } from '@/lib/scheduler'
+import { speechSupported, startSpeech, type SpeechSession } from '@/lib/speech'
+import { formatTime, startOfDay, toDate } from '@/lib/dates'
 import type { Task } from '@/lib/types'
 import { cn } from '@/lib/cn'
 import { ParsedTaskCard, type CaptureDraft } from './ParsedTaskCard'
@@ -26,6 +27,7 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
   const navigate = useNavigate()
   const reduceMotion = useReducedMotion()
   const tasks = useAppStore((state) => state.tasks)
+  const integrations = useAppStore((state) => state.integrations)
   const availability = useAppStore((state) => state.availability)
   const addTask = useAppStore((state) => state.addTask)
 
@@ -36,6 +38,12 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
   const [drafts, setDrafts] = useState<CaptureDraft[]>([])
   const [adjusting, setAdjusting] = useState(false)
   const dictationTimer = useRef<number | null>(null)
+  const speechSession = useRef<SpeechSession | null>(null)
+  const transcript = useRef('')
+  const [voiceSource, setVoiceSource] = useState<'micro' | 'demo'>('micro')
+  const [voiceError, setVoiceError] = useState<string | null>(null)
+  // Cada interpretación lleva un número; si llega una más nueva o se cierra la hoja, la vieja se ignora.
+  const runId = useRef(0)
 
   useEffect(() => {
     if (open) return
@@ -44,40 +52,63 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
     setText('')
     setDrafts([])
     setAdjusting(false)
+    setVoiceError(null)
+    runId.current += 1
+    stopDictation()
+  }, [open])
+
+  useEffect(() => () => stopDictation(), [])
+
+  /** Detiene cualquier dictado en curso: el del micrófono y el de demostración. */
+  function stopDictation() {
     if (dictationTimer.current) {
       window.clearInterval(dictationTimer.current)
       dictationTimer.current = null
     }
-  }, [open])
-
-  useEffect(
-    () => () => {
-      if (dictationTimer.current) window.clearInterval(dictationTimer.current)
-    },
-    [],
-  )
+    speechSession.current?.abort()
+    speechSession.current = null
+  }
 
   const run = async (phrase: string, fromVoice: boolean) => {
+    stopDictation()
     if (phrase.trim().length === 0) return
     setPhase('procesando')
+    const id = ++runId.current
     const parsed = await interpretWithAI(phrase, setStage, { skipListening: fromVoice })
+    if (id !== runId.current) return
 
-    const pending: Task[] = parsed
-      .filter((item) => !item.scheduledAt)
-      .map((item) => ({
-        id: item.id,
-        title: item.title,
-        category: item.category,
-        priority: item.priority,
-        status: 'pendiente',
-        durationMin: item.durationMin,
-        scheduledAt: null,
-        deadline: item.deadline,
-        locked: false,
-        source: fromVoice ? 'voz' : 'texto',
-      }))
+    const asTask = (item: (typeof parsed)[number]): Task => ({
+      id: item.id,
+      title: item.title,
+      category: item.category,
+      priority: item.priority,
+      status: item.scheduledAt ? 'programada' : 'pendiente',
+      durationMin: item.durationMin,
+      scheduledAt: item.scheduledAt ?? null,
+      deadline: item.deadline,
+      locked: false,
+      source: fromVoice ? 'voz' : 'texto',
+    })
 
-    const result = scheduleTasks(pending, tasks, availability, new Date())
+    const pending = parsed.filter((item) => !item.scheduledAt).map(asTask)
+    // Las tareas con hora dicha ocupan su lugar: las flexibles de la misma frase no deben caer encima.
+    const withTime = parsed.filter((item) => item.scheduledAt).map(asTask)
+
+    // Se acomodan una por una: si la persona dijo un día ("mañana entregar…"), se busca hueco
+    // desde ese día y no antes; cada tarea colocada ocupa su lugar para la siguiente.
+    const now = new Date()
+    const busy: Task[] = [...tasks, ...withTime]
+    const result: ReturnType<typeof scheduleTasks> = { placements: [], conflicts: [] }
+    for (const task of pending) {
+      const item = parsed.find((entry) => entry.id === task.id)
+      const dayStart = item?.preferredDay ? startOfDay(toDate(item.preferredDay)) : null
+      const from = dayStart && dayStart.getTime() > now.getTime() ? dayStart : now
+      const single = scheduleTasks([task], busy, availability, from)
+      result.placements.push(...single.placements)
+      result.conflicts.push(...single.conflicts)
+      const placement = single.placements[0]
+      if (placement) busy.push({ ...task, scheduledAt: placement.scheduledAt, status: 'programada' })
+    }
 
     setDrafts(
       parsed.map((item) => {
@@ -100,8 +131,75 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
     setPhase('revision')
   }
 
+  // `run` cambia en cada render; el micrófono avisa más tarde, así que usa siempre la última.
+  const runRef = useRef(run)
+  runRef.current = run
+
+  /** Graba con el micrófono; si el navegador no tiene dictado, usa la demostración. */
   const startDictation = () => {
+    // Si ya se está dictando, un segundo toque no arranca otro dictado encima.
+    if (phase === 'dictando') return
+    if (!speechSupported()) {
+      startDemo()
+      return
+    }
+    stopDictation()
     setMode('voz')
+    setVoiceSource('micro')
+    setVoiceError(null)
+    setText('')
+    transcript.current = ''
+
+    let failed = false
+    const session = startSpeech({
+      onText: (value) => {
+        transcript.current = value
+        setText(value)
+      },
+      onError: (message) => {
+        failed = true
+        setVoiceError(message)
+      },
+      onEnd: () => {
+        if (speechSession.current !== session) return
+        speechSession.current = null
+        const heard = transcript.current.trim()
+        if (heard.length > 0 && !failed) {
+          void runRef.current(heard, true)
+          return
+        }
+        setPhase('idle')
+        if (!failed) setVoiceError('No te escuché. Toca "Grabar otra vez" o usa la frase de demostración.')
+      },
+    })
+
+    if (!session) {
+      startDemo()
+      return
+    }
+    speechSession.current = session
+    setPhase('dictando')
+  }
+
+  /** "Detener y acomodar": corta el micrófono e interpreta lo que se alcanzó a escuchar. */
+  const finishDictation = () => {
+    const heard = voiceSource === 'micro' ? transcript.current.trim() : text
+    stopDictation()
+    if (heard.trim().length === 0) {
+      setPhase('idle')
+      setVoiceError('No te escuché. Toca "Grabar otra vez" o usa la frase de demostración.')
+      return
+    }
+    void run(heard, true)
+  }
+
+  /** Dictado simulado con la frase de ejemplo, para presentar sin micrófono. */
+  const startDemo = () => {
+    if (phase === 'dictando') return
+    stopDictation()
+    setMode('voz')
+    setVoiceSource('demo')
+    setVoiceError(null)
     setPhase('dictando')
     setText('')
     const words = DEMO_DICTATION.split(' ')
@@ -110,8 +208,6 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
       index += 1
       setText(words.slice(0, index).join(' '))
       if (index >= words.length) {
-        if (dictationTimer.current) window.clearInterval(dictationTimer.current)
-        dictationTimer.current = null
         void run(DEMO_DICTATION, true)
       }
     }, 130)
@@ -120,7 +216,7 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
   const confirm = () => {
     for (const draft of drafts) {
       addTask({
-        title: draft.title,
+        title: draft.title.trim() || 'Tarea nueva',
         category: draft.category,
         priority: 'media',
         status: draft.scheduledAt ? 'programada' : 'pendiente',
@@ -165,6 +261,7 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
             <ModeButton
               active={mode === 'texto'}
               onClick={() => {
+                stopDictation()
                 setMode('texto')
                 setPhase('idle')
               }}
@@ -211,10 +308,30 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
 
         {phase === 'dictando' && (
           <div className="flex flex-col gap-4">
-            <VoiceState text={text} />
-            <Button variant="secondary" fullWidth onClick={() => void run(text, true)}>
+            <VoiceState text={text} source={voiceSource} />
+            <Button variant="secondary" fullWidth onClick={finishDictation}>
               Detener y acomodar
             </Button>
+          </div>
+        )}
+
+        {phase === 'idle' && mode === 'voz' && (
+          <div className="flex flex-col gap-3">
+            {voiceError && (
+              <p role="alert" className="text-aux text-warn">
+                {voiceError}
+              </p>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button variant="primary" fullWidth onClick={startDictation}>
+                <Mic size={16} aria-hidden="true" />
+                Grabar otra vez
+              </Button>
+              <Button variant="secondary" fullWidth onClick={startDemo}>
+                <Sparkles size={16} aria-hidden="true" />
+                Usar la frase de demostración
+              </Button>
+            </div>
           </div>
         )}
 
@@ -242,6 +359,21 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
               <ParsedTaskCard
                 key={draft.id}
                 draft={draft}
+                warning={
+                  draft.scheduledAt
+                    ? findTimeClash(
+                        draft.scheduledAt,
+                        draft.durationMin,
+                        [
+                          ...visibleTasks(tasks, integrations),
+                          ...drafts
+                            .filter((other) => other.id !== draft.id)
+                            .map((other) => ({ ...other, status: 'programada' as const })),
+                        ],
+                        availability,
+                      )
+                    : null
+                }
                 adjusting={adjusting}
                 onChange={(patch) =>
                   setDrafts((current) =>
@@ -257,7 +389,7 @@ export function CaptureSheet({ open, onClose }: CaptureSheetProps) {
   )
 }
 
-function VoiceState({ text }: { text: string }) {
+function VoiceState({ text, source }: { text: string; source: 'micro' | 'demo' }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-card border border-line bg-surface p-4">
       <VoiceWave active className="w-full" />
@@ -268,7 +400,13 @@ function VoiceState({ text }: { text: string }) {
           className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-accent align-middle"
         />
       </p>
-      <p className="text-micro text-muted">Simulación de dictado: no se usa el micrófono.</p>
+      <p className="text-micro text-muted">
+        {source === 'micro'
+          ? text.length === 0
+            ? 'Escuchando… habla y luego toca "Detener y acomodar".'
+            : 'Escuchando con tu micrófono.'
+          : 'Frase de demostración: no se usa el micrófono.'}
+      </p>
     </div>
   )
 }

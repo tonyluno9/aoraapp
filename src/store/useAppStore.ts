@@ -12,7 +12,7 @@ import type { ParsedTask } from '@/lib/parser'
 import type { Suggestion } from '@/lib/capacity'
 import { SEED_INTEGRATIONS, buildSeed } from '@/lib/seed'
 import { scheduleTasks, type ScheduleResult } from '@/lib/scheduler'
-import { addDays, atMinutes, toDate } from '@/lib/dates'
+import { addDays, atMinutes, startOfDay, toDate } from '@/lib/dates'
 import { uid } from '@/lib/id'
 
 interface AppState {
@@ -26,6 +26,7 @@ interface AppState {
   lastRemoved: Task | null
 
   signIn: (email: string) => void
+  updateUser: (patch: { name?: string; email?: string }) => void
   signOut: () => void
   finishOnboarding: () => void
   finishScheduleSetup: () => void
@@ -70,6 +71,15 @@ export const useAppStore = create<AppState>()(
       scheduleConfigured: false,
       lastRemoved: null,
 
+      updateUser: (patch) =>
+        set((state) => ({
+          user: {
+            ...state.user,
+            name: patch.name?.trim() || state.user.name,
+            email: patch.email?.trim() || state.user.email,
+          },
+        })),
+
       signIn: (email) =>
         set((state) => ({
           authed: true,
@@ -105,9 +115,20 @@ export const useAppStore = create<AppState>()(
       },
 
       updateTask: (id, patch) =>
-        set((state) => ({
-          tasks: state.tasks.map((task) => (task.id === id ? { ...task, ...patch } : task)),
-        })),
+        set((state) => {
+          // Un título vacío nunca se guarda.
+          const safe =
+            patch.title !== undefined && patch.title.trim().length === 0
+              ? { ...patch, title: undefined }
+              : patch
+          return {
+            tasks: state.tasks.map((task) =>
+              task.id === id
+                ? { ...task, ...safe, title: safe.title?.trim() || task.title }
+                : task,
+            ),
+          }
+        }),
 
       toggleComplete: (id) =>
         set((state) => ({
@@ -164,15 +185,25 @@ export const useAppStore = create<AppState>()(
         const overdue = state.tasks.filter(
           (task) => task.status === 'vencida' && task.scheduledAt !== null,
         )
-        const candidates = [...toPlace, ...overdue]
+        const now = new Date()
+        // Una fecha límite que ya pasó no puede respetarse: se busca el primer hueco libre
+        // y la nueva fecha límite pasa a ser el final de ese día.
+        const expired = (task: Task) =>
+          task.deadline !== null && toDate(task.deadline).getTime() < now.getTime()
+        const candidates = [...toPlace, ...overdue].map((task) =>
+          expired(task) ? { ...task, deadline: null } : task,
+        )
         const busy = state.tasks.filter((task) => !candidates.some((item) => item.id === task.id))
-        const result = scheduleTasks(candidates, busy, state.availability, new Date())
+        const result = scheduleTasks(candidates, busy, state.availability, now)
 
         set({
           tasks: state.tasks.map((task) => {
             const placement = result.placements.find((item) => item.taskId === task.id)
             if (!placement) return task
-            return { ...task, scheduledAt: placement.scheduledAt, status: 'programada' }
+            const deadline = expired(task)
+              ? atMinutes(startOfDay(toDate(placement.scheduledAt)), 23 * 60 + 59).toISOString()
+              : task.deadline
+            return { ...task, scheduledAt: placement.scheduledAt, deadline, status: 'programada' }
           }),
         })
 

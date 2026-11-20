@@ -73,8 +73,14 @@ export function WeekGrid({ days, tasks, availability, onMove, onSelectDay }: Wee
 
     const onUp = (event: PointerEvent) => {
       if (movedRef.current) {
-        const element = document.elementFromPoint(event.clientX, event.clientY)
-        const column = element?.closest('[data-day-index]')
+        // El bloque arrastrado va bajo el puntero, pero sigue viviendo en su columna original:
+        // se ignora para encontrar la columna que de verdad está debajo.
+        const column =
+          document
+            .elementsFromPoint(event.clientX, event.clientY)
+            .filter((element) => !element.closest(`[data-task-id="${drag.taskId}"]`))
+            .map((element) => element.closest('[data-day-index]'))
+            .find((element) => element !== null) ?? null
         const index = column ? Number(column.getAttribute('data-day-index')) : -1
         const targetDay = index >= 0 && days[index] ? days[index] : null
 
@@ -166,11 +172,11 @@ export function WeekGrid({ days, tasks, availability, onMove, onSelectDay }: Wee
                     {day.getDate()}
                   </span>
                 </span>
-                <CapacityRing value={capacity.percent} size="sm" decorative />
+                <CapacityRing value={capacity.percent} overloaded={capacity.overloaded} size="sm" decorative />
                 <span
                   className={cn(
                     'text-micro tabular-nums',
-                    capacity.percent > 100 ? 'text-warn' : 'text-muted',
+                    capacity.overloaded ? 'text-warn' : 'text-muted',
                   )}
                 >
                   {capacity.percent}%

@@ -11,7 +11,7 @@ export const STAGE_LABEL: Record<AIStage, string> = {
 
 /** Frase de la demostración por voz. */
 export const DEMO_DICTATION =
-  'Mañana tengo que entregar el reporte de Cálculo, el viernes voy al dentista a las cinco y necesito estudiar para el examen del martes'
+  'Mañana tengo que entregar el reporte de Cálculo, el viernes voy al dentista a las tres y necesito estudiar para el examen del martes'
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
